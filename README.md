@@ -21,7 +21,6 @@ const base = cache.stash(
                       .tap((val) => console.log("hit http" + val)))()
 
 const stash = cache.merge(localstash, redisstash, base);
-// stash.get("key1").tap(console.log).then(() => stash.get("key1")).tap(console.log);
 
 highland(function (push, next) {
   push(null, {key: "key1"}); //+ Math.floor(Math.random() * 100));
