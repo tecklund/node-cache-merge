@@ -1,3 +1,5 @@
+node-cache-merge is a highly extensible cache manager with only one dependency (object-hash). It is build specifically to be able to work with any kind of cache, although several default implementations are available for your convienience.
+
 Example of use:  
 
 ```
