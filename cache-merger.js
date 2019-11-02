@@ -11,7 +11,6 @@ cache.setLocal = (exp) => (cache) => (key) => (val) => Promise.resolve(cache.set
 cache.getRedis = (rclient) => (key) => rclient.getAsync(key).catch(() => undefined);
 cache.setRedis = (exp) => (rclient) => (key) => (val) => rclient.setexAsync(key, exp, val).catch(() => undefined);
 
-
 cache.namedStash = (name) => (cache) => (getter) => (setter) => ({
   get: (key) => getter(cache)(addPrefix(name)(key)),
   set: (key) => (val) => setter(cache)(addPrefix(name)(key))(val)
@@ -36,14 +35,10 @@ cache.combine = (stash1, stash2) => ({
             .then((val) => val 
               ? val 
               : stash2.get(key)
-                .then((val) => {
-                  if(val){
-                    return stash1.set(key)(val).then(() => val)
-                  } else {
-                    return cache.promise.resolve(val)
-                  }
-                  
-                }),
+                .then((val) => val
+                  ? stash1.set(key)(val).then(() => val)
+                  : cache.promise.resolve(val)
+                ),
         ),
     set: (key) => (val) => stash1.set(key)(val).then(() => stash2.set(key)(val)).then(() => undefined)
   });
