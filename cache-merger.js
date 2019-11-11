@@ -9,28 +9,23 @@ cache.compose = (f, g) => (args) => f(g(args))
 cache.identity = x => x
 
 cache.getLRU = (lru) => (key) => cache.promise.resolve(lru.get(key));
-cache.setLRU = (exp) => (lru) => (key) => (val) => cache.promise.resolve(lru.set(key, val, exp));
+cache.setLRU = (lru) => (exp) => (key) => (val) => cache.promise.resolve(lru.set(key, val, exp));
 
 const nullToUndefined = (val) => val === null ? undefined : val;
 
 cache.getRedis = (rclient) => (key) => rclient.getAsync(key).then(nullToUndefined).catch(() => undefined);
-cache.setRedis = (exp) => (rclient) => (key) => (val) => rclient.setexAsync(key, exp, val).catch(() => undefined);
+cache.setRedis = (rclient) => (exp) => (key) => (val) => rclient.setexAsync(key, exp, val).catch(() => undefined);
 
 cache.keyGenStash = (keyGen) => (getter, setter) => ({
   get: (key) => getter(keyGen(key)),
   set: (key) => (val) => setter(keyGen(key))(val)
 });
 
+cache.namedStash = (name) => cache.keyGenStash(cache.compose(cache.addPrefix(name), hash))
 
-cache.namedStash = (name) => 
-  cache.keyGenStash(cache.compose(cache.addPrefix(name), hash))
+cache.hashedStash = cache.keyGenStash(hash)
 
-cache.hashedStash = 
-  cache.keyGenStash(hash)
-
-cache.keyedStash = (name) =>
-  cache.keyGenStash(cache.addPrefix(name))
-
+cache.keyedStash = (name) => cache.keyGenStash(cache.addPrefix(name))
 
 const noSet = (key) => (val) => cache.promise.resolve();
 

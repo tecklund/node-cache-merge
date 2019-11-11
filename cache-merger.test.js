@@ -113,10 +113,10 @@ test(`test caches`, async function() {
 
 
 const getLRU = (lru) => (key) => Promise.resolve(lru.get(key));
-const setLRU = (exp) => (lru) => (key) => (val) => Promise.resolve(lru.set(key, val, exp));
+const setLRU = (lru) => (exp) => (key) => (val) => Promise.resolve(lru.set(key, val, exp));
 
 const getRedis = (rclient) => (key) => rclient.getAsync(key).then(nullToUndefined).catch(() => undefined);
-const setRedis = (exp) => (rclient) => (key) => (val) => rclient.setexAsync(key, exp, val).catch(() => undefined);
+const setRedis = (rclient) => (exp) => (key) => (val) => rclient.setexAsync(key, exp, val).catch(() => undefined);
 const noSet = (key) => (val) => Promise.resolve();
 
 const stash = (getter, setter = noSet) => ({
@@ -128,8 +128,8 @@ test(`test caches`, async function() {
 
 
   let c = 'smaugs treasure'
-  const stashA = stash(getLRU(localcache), setLRU(5)(localcache))
-  const stashB = stash(getRedis(rclient), setRedis(5)(rclient))
+  const stashA = stash(getLRU(localcache), setLRU(localcache)(5))
+  const stashB = stash(getRedis(rclient), setRedis(5)(rclient)(5))
   const stashC = stash(() => Promise.resolve(c))
   const totalStash = cache.merge(stashA, stashB, stashC)
   await totalStash.get("key").then((v) => console.log(`ret val was ${v}`))
@@ -146,8 +146,8 @@ test(`test caches`, async function() {
   const appstash = namedStash('myapp');
 
   let c = 'smaugs treasure'
-  const stashA = stash(getLRU(localcache), setLRU(5)(localcache))
-  const stashB = appstash(getRedis(rclient), setRedis(5)(rclient))
+  const stashA = stash(getLRU(localcache), setLRU(localcache)(5))
+  const stashB = appstash(getRedis(rclient), setRedis(rclient)(5))
   const stashC = stash(() => Promise.resolve(c))
   const totalStash = cache.merge(stashA, stashB, stashC)
   await totalStash.get("key").then((v) => console.log(`ret val was ${v}`))
@@ -199,4 +199,22 @@ test.only(`test set keyedStash`, async function() {
   await mystash.set('tim')(1).then(() => {
     expect(a).toBe('myapp:tim')
   })
+});
+
+test.only(`real test`, async function() {
+  let a = 'a treasure'
+  let b = 'b treasure'
+  let c = 'c treasure'
+  const appstash = cache.namedStash('myapp');
+  const localstash = cache.stash(getLRU(localcache), setLRU(localcache)(5))
+  const redisstash = appstash(getRedis(rclient), setRedis(rclient)(5))
+  const stashes = cache.merge(localstash, redisstash)
+
+  const cachedA = cache.merge(stashes, stash(() => Promise.resolve(a)))
+  const cachedB = cache.merge(stashes, stash(() => Promise.resolve(b)))
+  const cachedC = cache.merge(stashes, stash(() => Promise.resolve(c)))
+
+  await cachedA.get("keya").then((v) => expect(v).toBe('a treasure'))
+  await cachedB.get("keyb").then((v) => expect(v).toBe('b treasure'))
+  await cachedC.get("keyc").then((v) => expect(v).toBe('c treasure'))
 });
