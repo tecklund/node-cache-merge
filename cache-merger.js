@@ -16,6 +16,12 @@ const nullToUndefined = (val) => val === null ? undefined : val;
 cache.getRedis = (rclient) => (key) => rclient.getAsync(key).then(nullToUndefined).catch(() => undefined);
 cache.setRedis = (exp) => (rclient) => (key) => (val) => rclient.setexAsync(key, exp, val).catch(() => undefined);
 
+cache.keyGenStash = (keyGen) => (getter, setter) => ({
+  get: (key) => getter(keyGen(key)),
+  set: (key) => (val) => setter(keyGen(key))(val)
+});
+
+
 cache.namedStash = (name) => 
   cache.keyGenStash(cache.compose(cache.addPrefix(name), hash))
 
@@ -25,10 +31,6 @@ cache.hashedStash =
 cache.keyedStash = (name) =>
   cache.keyGenStash(cache.addPrefix(name))
 
-cache.keyGenStash = (keyGen) => (getter, setter) => ({
-  get: (key) => getter(keyGen(key)),
-  set: (key) => (val) => setter(keyGen(key))(val)
-});
 
 const noSet = (key) => (val) => cache.promise.resolve();
 

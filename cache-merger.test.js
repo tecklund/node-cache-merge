@@ -153,3 +153,50 @@ test(`test caches`, async function() {
   await totalStash.get("key").then((v) => console.log(`ret val was ${v}`))
     .tap(() => rclient.quit())
 });
+
+test.only(`test get namedStash`, async function() {
+  const appstash = cache.namedStash('myapp');
+  const mystash = appstash((key) => Promise.resolve(key), () => Promise.resolve(undefined))
+  await mystash.get('tim').then((val) => {
+    expect(val).toBe('myapp:0545e9b8dfadca14cf06d163e2d2514c161d5d17')
+  })
+});
+
+test.only(`test get hashedStash`, async function() {
+  const mystash = cache.hashedStash((key) => Promise.resolve(key), () => Promise.resolve(undefined))
+  await mystash.get('tim').then((val) => {
+    expect(val).toBe('0545e9b8dfadca14cf06d163e2d2514c161d5d17')
+  })
+});
+
+test.only(`test get keyedStash`, async function() {
+  const mystash = cache.keyedStash('myapp')((key) => Promise.resolve(key), () => Promise.resolve(undefined))
+  await mystash.get('tim').then((val) => {
+    expect(val).toBe('myapp:tim')
+  })
+});
+
+test.only(`test set namedStash`, async function() {
+  let a = undefined;
+  const appstash = cache.namedStash('myapp');
+  const mystash = appstash((key) => Promise.resolve(key), (key) => (val) => Promise.resolve(a = key))
+  await mystash.set('tim')(1).then(() => {
+    expect(a).toBe('myapp:0545e9b8dfadca14cf06d163e2d2514c161d5d17')
+  })
+});
+
+test.only(`test set hashedStash`, async function() {
+  let a = undefined;
+  const mystash = cache.hashedStash((key) => Promise.resolve(key), (key) => (val) => Promise.resolve(a = key))
+  await mystash.set('tim')(1).then(() => {
+    expect(a).toBe('0545e9b8dfadca14cf06d163e2d2514c161d5d17')
+  })
+});
+
+test.only(`test set keyedStash`, async function() {
+  let a = undefined;
+  const mystash = cache.keyedStash('myapp')((key) => Promise.resolve(key), (key) => (val) => Promise.resolve(a = key))
+  await mystash.set('tim')(1).then(() => {
+    expect(a).toBe('myapp:tim')
+  })
+});
