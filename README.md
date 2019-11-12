@@ -3,30 +3,49 @@ node-cache-merge is a highly extensible cache manager with only one dependency (
 Example of use:  
 
 ```
+'use strict';
+
 const axios = require('axios');
 const redis = require('redis');
+const Promise = require('bluebird');
+const highland = require('highland')
 Promise.promisifyAll(redis);
+
+/**
+ * rclient is set up so that if redis goes down it will not queue attempts
+ * and it will not attempt a retry for 10 seconds
+*/
 const rclient = redis.createClient({enable_offline_queue: false, retry_strategy: function (options){
   return 10000;
 }});
-rclient.on('error', function (er) {})
-const cache = require('./cache');
+rclient.on('error', function (err) {})
+const cache = require('./cache-merger');
+cache.promise = Promise;
 const LRU = require("lru-cache");
 const localcache = new LRU({ max: 70 });
 
-const localstash = cache.namedStash("local")(localcache)(cache.getLocal)(cache.setLocal(1000));
-const redisstash = cache.namedStash("redis")(rclient)(cache.getRedis)(cache.setRedis(5));
-const base = cache.stash(
-                    (key) => 
-                      Promise.resolve(axios.get(`http://localhost:3003`))
-                      .then((payload) => payload.data)
-                      .tap((val) => console.log("hit http" + val)))()
+/**
+ * Set up the stashes at the beginning of your program
+ */
+const localstash = cache.hashedStash(cache.getLRU(localcache), cache.setLRU(localcache)(1000));
+const redisstash = cache.namedStash('myapp')(cache.getRedis(rclient), cache.setRedis(rclient)(5));
+const stashes = cache.merge(localstash, redisstash);
 
-const stash = cache.merge(localstash, redisstash, base);
+/**
+ * create a base stash that reaches out to an endpoint
+ */
+const stash = cache.merge(stashes,
+  cache.stash( (key) => 
+    Promise.resolve(axios.get(`http://localhost:3003`))
+    .then((payload) => payload.data)
+    .tap((val) => console.log("hit http" + val))
+  )
+)
 
 highland(function (push, next) {
-  push(null, {key: "key1"}); //+ Math.floor(Math.random() * 100));
+  push(null, {key: "key1"}); 
   next();
 })
-.flatMap((item) => highland(stash.get(item).catch(console.error))).done();
+.flatMap((item) => highland(stash.get(item).catch(console.error))).done(() => rclient.quit());
+
 ```
