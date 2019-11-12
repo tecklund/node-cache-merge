@@ -1,4 +1,8 @@
 node-cache-merge is a highly extensible cache manager with only one dependency (object-hash). It is build specifically to be able to work with any kind of cache, although several default implementations are available for your convienience.  
+
+What is a cache manager? A cache manager let's you take multiple caches and merge them together, hiding the gross and repetative details of looking things up in muliple places. For example, you might want to cache something locally with a short timeout, and then in a remote cache (like redis) with a longer timeout before eventually hitting your source of truth. Without a cache manager you would need to nest your calls, leading to a lot of boilerplate.
+
+With a cache manager all of those details are taken care of. Simply wrap your base getter and setter in a function and pass it to the manager. When you call `get` the manager will iterate through the list of caches, pulling out the first unexpired value that it finds. The manager will then update the previous caches in the list with the value that it found. `set` works similarly, and will push a value to all of the caches within the manager.
   
 Advantages of node-cache-merge over other cache managers:
 - Clients are not created as part of the manager, so you can use the most up to date versions of your client
