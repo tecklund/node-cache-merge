@@ -33,7 +33,7 @@ const rclient = redis.createClient({enable_offline_queue: false, retry_strategy:
   return 10000;
 }});
 rclient.on('error', function (err) {})
-const cache = require('./cache-merger');
+const cache = require('./cache-merge');
 cache.promise = Promise;
 const LRU = require("lru-cache");
 const localcache = new LRU({ max: 70 });

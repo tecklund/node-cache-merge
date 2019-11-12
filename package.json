@@ -1,6 +1,6 @@
 {
   "name": "cache-merge",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Easily extensible cache manager",
   "scripts": {
     "test": "jest"
