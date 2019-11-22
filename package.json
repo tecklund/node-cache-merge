@@ -1,6 +1,6 @@
 {
   "name": "cache-merge",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Easily extensible cache manager",
   "scripts": {
     "test": "jest"
@@ -9,6 +9,7 @@
     "type": "git",
     "url": "git+https://github.com/gnomff/node-cache-merge.git"
   },
+  "main": "./cache-merge.js",
   "keywords": [
     "node",
     "cache"
