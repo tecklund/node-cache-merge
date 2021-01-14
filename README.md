@@ -1,4 +1,4 @@
-node-cache-merge is a highly extensible cache manager with only one dependency (object-hash). It is build specifically to be able to work with any kind of cache, although several default implementations are available for your convienience.  
+node-cache-merge is a highly extensible cache manager with only one dependency (object-hash). It is built specifically to be able to work with any kind of cache, although several default implementations are available for your convienience.  
 
 What is a cache manager? A cache manager lets you take multiple caches and merge them together, hiding the gross and repetative details of looking things up in muliple places. For example, you might want to cache something locally with a short timeout, and then in a remote cache (like redis) with a longer timeout before eventually hitting your source of truth. Without a cache manager you would need to nest your calls, leading to a lot of boilerplate.
 
